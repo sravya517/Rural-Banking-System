@@ -1,0 +1,34 @@
+
+{% extends "base.html" %}
+
+{% block title %}Login | RuralBank{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="icon">🌾</div>
+    <h1>Welcome Back</h1>
+    <p class="muted">Access your rural banking dashboard.</p>
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <label>Username</label>
+        <input type="text" name="username" placeholder="Enter username" required>
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Enter password" required>
+
+        <button class="primary-button" type="submit">Login</button>
+    </form>
+
+    <p class="switch">New here? <a href="{{ url_for('register') }}">Create an account</a></p>
+
+    <div class="demo-box">
+        <strong>Demo accounts</strong>
+        <p>Username: demo1 or demo2</p>
+        <p>Password: Register your own account for testing.</p>
+        <small>The demo accounts have no known passwords. Create an account to test transfers.</small>
+    </div>
+</div>
+{% endblock %}
+

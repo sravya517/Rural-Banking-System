@@ -1,0 +1,93 @@
+
+{% extends "base.html" %}
+
+{% block title %}Dashboard | RuralBank{% endblock %}
+
+{% block content %}
+<section class="welcome">
+    <div>
+        <p class="eyebrow">YOUR ACCOUNT</p>
+        <h1>Hello, {{ user['name'] }} 👋</h1>
+        <p class="muted">Manage your demo account in one place.</p>
+    </div>
+    <div class="account-chip">
+        <span>Account number</span>
+        <strong>{{ user['account_number'] }}</strong>
+    </div>
+</section>
+
+<section class="balance-card">
+    <div>
+        <p>Available demo balance</p>
+        <h2>₹{{ "%.2f"|format(user['balance']) }}</h2>
+        <span>Fictional funds for demonstration only</span>
+    </div>
+    <div class="balance-icon">₹</div>
+</section>
+
+<div class="section-heading">
+    <h2>Transfer Money</h2>
+    <p>Send simulated funds to another registered test account.</p>
+</div>
+
+<section class="content-grid">
+    <div class="panel">
+        <h3>New Transfer</h3>
+
+        <form action="{{ url_for('transfer') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <label>Recipient Account Number</label>
+            <input type="text" name="account_number" placeholder="Example: RB1234567890 or DEMO-1001" required>
+
+            <label>Amount (₹)</label>
+            <input type="number" name="amount" min="0.01" max="100000" step="0.01" placeholder="Enter amount" required>
+
+            <label>Description (optional)</label>
+            <input type="text" name="description" maxlength="100" placeholder="Example: Household expenses">
+
+            <button class="primary-button" type="submit">Transfer Money →</button>
+        </form>
+
+        <div class="demo-box">
+            <strong>Testing tip</strong>
+            <p>Register two accounts in separate browser sessions and transfer between their account numbers.</p>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Recent Transactions</h3>
+            <a href="{{ url_for('history') }}">View all →</a>
+        </div>
+
+        {% if transactions %}
+            {% for t in transactions %}
+            <div class="transaction">
+                <div class="transaction-icon">
+                    {% if t['sender_id'] == user['id'] %}↗{% else %}↙{% endif %}
+                </div>
+                <div class="transaction-details">
+                    <strong>
+                        {% if t['sender_id'] == user['id'] %}
+                            To {{ t['receiver_name'] }}
+                        {% else %}
+                            From {{ t['sender_name'] }}
+                        {% endif %}
+                    </strong>
+                    <small>{{ t['description'] }}</small>
+                    <small>{{ t['created_at'] }}</small>
+                </div>
+                <strong class="{% if t['sender_id'] == user['id'] %}debit{% else %}credit{% endif %}">
+                    {% if t['sender_id'] == user['id'] %}−{% else %}+{% endif %}
+                    ₹{{ "%.2f"|format(t['amount']) }}
+                </strong>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty">No transactions yet. Your transfers will appear here.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

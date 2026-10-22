@@ -1,0 +1,61 @@
+
+{% extends "base.html" %}
+
+{% block title %}Transaction History | RuralBank{% endblock %}
+
+{% block content %}
+<div class="section-heading">
+    <p class="eyebrow">ACCOUNT ACTIVITY</p>
+    <h1>Transaction History</h1>
+    <p class="muted">Review all simulated transfers associated with your account.</p>
+</div>
+
+<div class="panel history-panel">
+    {% if transactions %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Person</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr>
+                        <td>
+                            {% if t['sender_id'] == session['user_id'] %}
+                                Sent
+                            {% else %}
+                                Received
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if t['sender_id'] == session['user_id'] %}
+                                {{ t['receiver_name'] }}
+                            {% else %}
+                                {{ t['sender_name'] }}
+                            {% endif %}
+                        </td>
+                        <td>{{ t['description'] }}</td>
+                        <td>{{ t['created_at'] }}</td>
+                        <td class="{% if t['sender_id'] == session['user_id'] %}debit{% else %}credit{% endif %}">
+                            {% if t['sender_id'] == session['user_id'] %}−{% else %}+{% endif %}
+                            ₹{{ "%.2f"|format(t['amount']) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="empty">No transactions found.</p>
+    {% endif %}
+</div>
+
+<a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+{% endblock %}
+
