@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | RuralBank{% endblock %}
+
+{% block content %}
+
+<div class="section-heading">
+    <p class="eyebrow">ADMINISTRATION</p>
+
+
+<h1>Admin Dashboard</h1>
+
+<p>Overview of the RuralBank demo system.</p>
+
+
+</div>
+
+<div class="stats-grid">
+
+
+<div class="panel">
+    <p class="muted">Registered Users</p>
+    <h2>{{ total_users }}</h2>
+</div>
+
+<div class="panel">
+    <p class="muted">Total Transactions</p>
+    <h2>{{ total_transactions }}</h2>
+</div>
+
+<div class="panel">
+    <p class="muted">Total Transferred</p>
+    <h2>₹{{ "%.2f"|format(total_transferred) }}</h2>
+</div>
+
+
+</div>
+
+<div class="panel history-panel" style="margin-top: 25px;">
+
+
+<h2>Recent Transactions</h2>
+
+{% if recent_transactions %}
+
+<div class="table-wrap">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Sender</th>
+                <th>Receiver</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for transaction in recent_transactions %}
+
+            <tr>
+                <td>{{ transaction.sender_name }}</td>
+
+                <td>{{ transaction.receiver_name }}</td>
+
+                <td>
+                    ₹{{ "%.2f"|format(transaction.amount) }}
+                </td>
+
+                <td>{{ transaction.description }}</td>
+
+                <td>{{ transaction.created_at }}</td>
+            </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+{% else %}
+
+<p class="empty">
+    No transactions have been recorded yet.
+</p>
+
+{% endif %}
+
+
+</div>
+
+{% endblock %}

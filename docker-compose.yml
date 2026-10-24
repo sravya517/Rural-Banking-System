@@ -1,15 +1,16 @@
-
 services:
-  rural-banking:
+  web:
     build: .
     ports:
       - "5000:5000"
     environment:
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in your environment}
-      DATABASE_PATH: /data/banking.db
+      DATABASE_PATH: /app/data/banking.db
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
     volumes:
-      - banking_data:/data
-    restart: unless-stopped
+      - banking_data:/app/data
 
 volumes:
   banking_data:

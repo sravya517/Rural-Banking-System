@@ -4,90 +4,297 @@
 {% block title %}Dashboard | RuralBank{% endblock %}
 
 {% block content %}
-<section class="welcome">
-    <div>
-        <p class="eyebrow">YOUR ACCOUNT</p>
-        <h1>Hello, {{ user['name'] }} 👋</h1>
-        <p class="muted">Manage your demo account in one place.</p>
-    </div>
-    <div class="account-chip">
-        <span>Account number</span>
-        <strong>{{ user['account_number'] }}</strong>
-    </div>
-</section>
 
-<section class="balance-card">
-    <div>
-        <p>Available demo balance</p>
-        <h2>₹{{ "%.2f"|format(user['balance']) }}</h2>
-        <span>Fictional funds for demonstration only</span>
-    </div>
-    <div class="balance-icon">₹</div>
-</section>
+<div class="dashboard">
 
-<div class="section-heading">
-    <h2>Transfer Money</h2>
-    <p>Send simulated funds to another registered test account.</p>
-</div>
+    <!-- Welcome -->
+    <section class="dashboard-welcome">
+        <div>
+            <p class="welcome-label">YOUR FINANCIAL OVERVIEW</p>
+            <h1>Welcome back, {{ user['name'] }}!</h1>
+            <p>Manage your account and track your transactions.</p>
+        </div>
 
-<section class="content-grid">
-    <div class="panel">
-        <h3>New Transfer</h3>
+        <div class="account-status">
+            <span class="status-dot"></span>
+            Account Overview
+        </div>
+    </section>
 
-        <form action="{{ url_for('transfer') }}" method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <!-- Balance Card -->
+    <section class="balance-card">
 
-            <label>Recipient Account Number</label>
-            <input type="text" name="account_number" placeholder="Example: RB1234567890 or DEMO-1001" required>
+        <div class="balance-card-top">
+            <div>
+                <p class="balance-label">TOTAL ACCOUNT BALANCE</p>
+                <h2>₹{{ "%.2f"|format(user['balance']|default(0, true)|float) }}</h2>
+            </div>
 
-            <label>Amount (₹)</label>
-            <input type="number" name="amount" min="0.01" max="100000" step="0.01" placeholder="Enter amount" required>
+            <div class="balance-symbol">RB</div>
+        </div>
 
-            <label>Description (optional)</label>
-            <input type="text" name="description" maxlength="100" placeholder="Example: Household expenses">
+        <div class="balance-divider"></div>
 
-            <button class="primary-button" type="submit">Transfer Money →</button>
+        <!-- Account Details -->
+        <div class="balance-card-bottom">
+
+            <div>
+                <span class="balance-caption">ACCOUNT HOLDER</span>
+                <strong>{{ user['name'] }}</strong>
+            </div>
+
+            <div>
+                <span class="balance-caption">ACCOUNT NUMBER</span>
+                <strong>{{ user['account_number'] }}</strong>
+            </div>
+
+            <div>
+                <span class="balance-caption">ACCOUNT TYPE</span>
+                <strong>Savings Account</strong>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="dashboard-section">
+
+        <div class="section-title">
+            <div>
+                <h2>Quick Actions</h2>
+                <p>Manage your banking activities.</p>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+
+            <a class="action-card" href="#transfer-section">
+                <span class="action-icon transfer-icon">↗</span>
+                <span class="action-name">Transfer Money</span>
+                <span class="action-description">
+                    Send money to another account
+                </span>
+                <span class="action-arrow">→</span>
+            </a>
+
+            <a class="action-card" href="{{ url_for('history') }}">
+                <span class="action-icon history-icon">↻</span>
+                <span class="action-name">Transactions</span>
+                <span class="action-description">
+                    Review your transaction history
+                </span>
+                <span class="action-arrow">→</span>
+            </a>
+
+            <a class="action-card" href="#account-overview">
+                <span class="action-icon account-icon">○</span>
+                <span class="action-name">Account Overview</span>
+                <span class="action-description">
+                    View your account information
+                </span>
+                <span class="action-arrow">→</span>
+            </a>
+
+        </div>
+
+    </section>
+
+    <!-- Account Overview -->
+    <section class="dashboard-section" id="account-overview">
+
+        <div class="section-title">
+            <div>
+                <h2>Account Overview</h2>
+                <p>A quick look at your banking activity.</p>
+            </div>
+        </div>
+
+        <div class="overview-grid">
+
+            <div class="overview-card">
+                <div class="overview-card-top">
+                    <span class="overview-icon blue-icon">₹</span>
+                    <span class="overview-tag">Balance</span>
+                </div>
+
+                <p>Available Balance</p>
+
+                <h3>
+                    ₹{{ "%.2f"|format(user['balance']|default(0, true)|float) }}
+                </h3>
+            </div>
+
+            <div class="overview-card">
+                <div class="overview-card-top">
+                    <span class="overview-icon cyan-icon">↗</span>
+                    <span class="overview-tag">Activity</span>
+                </div>
+
+                <p>Recent Transactions</p>
+                <h3>{{ transactions|length }}</h3>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- Transfer Money -->
+    <section class="dashboard-section transfer-panel" id="transfer-section">
+
+        <div class="section-title">
+            <div>
+                <h2>Transfer Money</h2>
+                <p>Transfer money to another RuralBank account.</p>
+            </div>
+        </div>
+
+        <div class="transfer-note">
+            <span class="note-symbol">i</span>
+            <p>
+                Transfers are simulated for educational purposes.
+                No real money is transferred.
+            </p>
+        </div>
+
+        <!-- Transfer Form -->
+        <form
+            action="{{ url_for('transfer') }}"
+            method="POST"
+            class="transfer-form"
+        >
+
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+            >
+
+            <div class="form-group">
+                <label for="account_number">
+                    Recipient Account Number
+                </label>
+
+                <input
+                    type="text"
+                    id="account_number"
+                    name="account_number"
+                    placeholder="Enter recipient account number"
+                    maxlength="30"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="amount">Amount (₹)</label>
+
+                <input
+                    type="number"
+                    id="amount"
+                    name="amount"
+                    placeholder="Enter transfer amount"
+                    min="0.01"
+                    max="100000"
+                    step="0.01"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="description">
+                    Description (Optional)
+                </label>
+
+                <input
+                    type="text"
+                    id="description"
+                    name="description"
+                    placeholder="e.g. Personal transfer"
+                    maxlength="100"
+                >
+            </div>
+
+            <button type="submit" class="transfer-button">
+                Transfer Money →
+            </button>
+
         </form>
 
-        <div class="demo-box">
-            <strong>Testing tip</strong>
-            <p>Register two accounts in separate browser sessions and transfer between their account numbers.</p>
-        </div>
-    </div>
+    </section>
 
-    <div class="panel">
-        <div class="panel-heading">
-            <h3>Recent Transactions</h3>
-            <a href="{{ url_for('history') }}">View all →</a>
-        </div>
+    <!-- Recent Transactions -->
+    <section class="dashboard-section">
 
-        {% if transactions %}
-            {% for t in transactions %}
-            <div class="transaction">
-                <div class="transaction-icon">
-                    {% if t['sender_id'] == user['id'] %}↗{% else %}↙{% endif %}
-                </div>
-                <div class="transaction-details">
-                    <strong>
-                        {% if t['sender_id'] == user['id'] %}
-                            To {{ t['receiver_name'] }}
-                        {% else %}
-                            From {{ t['sender_name'] }}
-                        {% endif %}
-                    </strong>
-                    <small>{{ t['description'] }}</small>
-                    <small>{{ t['created_at'] }}</small>
-                </div>
-                <strong class="{% if t['sender_id'] == user['id'] %}debit{% else %}credit{% endif %}">
-                    {% if t['sender_id'] == user['id'] %}−{% else %}+{% endif %}
-                    ₹{{ "%.2f"|format(t['amount']) }}
-                </strong>
+        <div class="section-title">
+            <div>
+                <h2>Recent Transactions</h2>
+                <p>Your latest account activity.</p>
             </div>
-            {% endfor %}
-        {% else %}
-            <p class="empty">No transactions yet. Your transfers will appear here.</p>
-        {% endif %}
-    </div>
-</section>
+
+            <a class="view-all-link" href="{{ url_for('history') }}">
+                View All →
+            </a>
+        </div>
+
+        <div class="recent-transactions">
+
+            {% if transactions %}
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Transaction</th>
+                                <th>Person</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for transaction in transactions %}
+
+                                <tr>
+                                    <td>
+                                        {% if transaction['sender_id'] == user['id'] %}
+                                            Sent
+                                        {% else %}
+                                            Received
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if transaction['sender_id'] == user['id'] %}
+                                            {{ transaction['receiver_name'] }}
+                                        {% else %}
+                                            {{ transaction['sender_name'] }}
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        ₹{{ "%.2f"|format(transaction['amount']|float) }}
+                                    </td>
+                                </tr>
+
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            {% else %}
+
+                <div class="transaction-empty">
+                    <div class="empty-icon">↔</div>
+                    <h3>No Transactions Yet</h3>
+                    <p>Your recent transactions will appear here.</p>
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+</div>
+
 {% endblock %}
 

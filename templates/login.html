@@ -1,34 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-{% extends "base.html" %}
+    <title>RuralBank | Login</title>
 
-{% block title %}Login | RuralBank{% endblock %}
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-{% block content %}
-<div class="auth-card">
-    <div class="icon">🌾</div>
-    <h1>Welcome Back</h1>
-    <p class="muted">Access your rural banking dashboard.</p>
+        body {
+            margin: 0;
+            padding: 25px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: #f0f5f2;
+            color: #24352d;
+        }
 
-    <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        .container {
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+        }
 
-        <label>Username</label>
-        <input type="text" name="username" placeholder="Enter username" required>
+        .logo {
+            font-size: 36px;
+            font-weight: bold;
+            color: #176b45;
+            margin-bottom: 8px;
+        }
 
-        <label>Password</label>
-        <input type="password" name="password" placeholder="Enter password" required>
+        .subtitle {
+            color: #65736b;
+            margin-bottom: 30px;
+        }
 
-        <button class="primary-button" type="submit">Login</button>
-    </form>
+        .login-options {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+        }
 
-    <p class="switch">New here? <a href="{{ url_for('register') }}">Create an account</a></p>
+        .card {
+            background: white;
+            padding: 30px 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            text-align: left;
+        }
 
-    <div class="demo-box">
-        <strong>Demo accounts</strong>
-        <p>Username: demo1 or demo2</p>
-        <p>Password: Register your own account for testing.</p>
-        <small>The demo accounts have no known passwords. Create an account to test transfers.</small>
+        .icon {
+            text-align: center;
+            font-size: 40px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            text-align: center;
+            color: #718078;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 7px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccd7d0;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: 2px solid #8bc7a5;
+            border-color: #176b45;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 22px;
+            border: none;
+            border-radius: 7px;
+            background: #176b45;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #105536;
+        }
+
+        .admin-button {
+            background: #344c70;
+        }
+
+        .admin-button:hover {
+            background: #243954;
+        }
+
+        .register {
+            text-align: center;
+            margin-top: 20px;
+            line-height: 1.8;
+        }
+
+        a {
+            color: #176b45;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .message {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 7px;
+            background: #fff0d9;
+            color: #754600;
+            text-align: center;
+        }
+
+        .success {
+            background: #dff5e6;
+            color: #176b45;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #718078;
+        }
+
+        @media (max-width: 650px) {
+            .login-options {
+                grid-template-columns: 1fr;
+            }
+
+            .logo {
+                font-size: 29px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="logo">🏦 RuralBank</div>
+
+    <p class="subtitle">
+        Simple and accessible banking for rural communities
+    </p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="message {{ category }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <div class="login-options">
+
+        <!-- USER LOGIN -->
+        <div class="card">
+
+            <div class="icon">👤</div>
+
+            <h2>User Login</h2>
+
+            <p class="description">
+                Access your bank account, transfer money,
+                and view your transaction history.
+            </p>
+
+            <form action="{{ url_for('login') }}" method="POST">
+
+                <!-- CSRF TOKEN -->
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <label for="user-username">Username</label>
+
+                <input
+                    type="text"
+                    id="user-username"
+                    name="username"
+                    autocomplete="username"
+                    required
+                >
+
+                <label for="user-password">Password</label>
+
+                <input
+                    type="password"
+                    id="user-password"
+                    name="password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit">
+                    Login as User
+                </button>
+
+            </form>
+
+            <div class="register">
+                New customer?
+                <a href="{{ url_for('register') }}">
+                    Create an account
+                </a>
+            </div>
+
+        </div>
+
+
+        <!-- ADMIN LOGIN -->
+        <div class="card">
+
+            <div class="icon">🛡️</div>
+
+            <h2>Admin Login</h2>
+
+            <p class="description">
+                Access administrative statistics and
+                review registered users and transactions.
+            </p>
+
+            <form
+                action="{{ url_for('admin_login') }}"
+                method="POST"
+            >
+
+                <!-- CSRF TOKEN -->
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <label for="admin-username">
+                    Admin Username
+                </label>
+
+                <input
+                    type="text"
+                    id="admin-username"
+                    name="username"
+                    autocomplete="username"
+                    required
+                >
+
+                <label for="admin-password">
+                    Admin Password
+                </label>
+
+                <input
+                    type="password"
+                    id="admin-password"
+                    name="password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit" class="admin-button">
+                    Login as Admin
+                </button>
+
+            </form>
+
+        </div>
+
     </div>
-</div>
-{% endblock %}
 
+    <div class="footer">
+        RuralBank Educational Project
+    </div>
+
+</div>
+
+</body>
+</html>
