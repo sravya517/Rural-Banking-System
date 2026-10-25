@@ -178,6 +178,17 @@ def admin_required(view):
     return wrapped_view
 
 
+# ---------------- HEALTH CHECK ----------------
+
+@app.route("/health")
+def health():
+    try:
+        get_db().execute("SELECT 1")
+        return {"status": "healthy"}, 200
+    except Exception as exc:
+        return {"status": "unhealthy", "error": str(exc)}, 500
+
+
 # ---------------- HOME ----------------
 
 @app.route("/")

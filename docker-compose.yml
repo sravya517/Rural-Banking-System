@@ -1,17 +1,23 @@
 services:
   web:
     build: .
+    restart: unless-stopped
     ports:
       - "5000:5000"
     environment:
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in your environment}
-      DATABASE_PATH: /app/data/banking.db
+      DATABASE_PATH: /data/banking.db
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
     volumes:
-      - banking_data:/app/data
+      - banking_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   banking_data:
-
