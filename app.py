@@ -89,6 +89,13 @@ def init_db():
             description TEXT NOT NULL DEFAULT 'Money transfer',
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS admins (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
     """)
 
     demo_accounts = [
@@ -110,6 +117,24 @@ def init_db():
                 account_number,
                 10000.00,
             ),
+        )
+
+    # Seed admin credentials in the database
+    admin_user = os.environ.get("ADMIN_USERNAME", "admin")
+    admin_pass = os.environ.get("ADMIN_PASSWORD", "admin@123")
+
+    existing_admin = db.execute(
+        "SELECT id FROM admins WHERE username = ?",
+        (admin_user,),
+    ).fetchone()
+
+    if not existing_admin:
+        db.execute(
+            """
+            INSERT INTO admins (username, password)
+            VALUES (?, ?)
+            """,
+            (admin_user, generate_password_hash(admin_pass)),
         )
 
     db.commit()
@@ -291,6 +316,20 @@ def login():
 
             return redirect(url_for("dashboard"))
 
+        # Also support logging in as admin from the user login form
+        admin = get_db().execute(
+            "SELECT * FROM admins WHERE username = ?",
+            (username,),
+        ).fetchone()
+
+        if admin and check_password_hash(admin["password"], password):
+            session.clear()
+            session["is_admin"] = True
+            session["_csrf_token"] = secrets.token_urlsafe(32)
+
+            flash("Admin login successful.", "success")
+            return redirect(url_for("admin_dashboard"))
+
         flash("Invalid username or password.", "error")
 
     return render_template("login.html")
@@ -306,12 +345,24 @@ def admin_login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
+        db = get_db()
 
-        if (
+        # Check credentials in the database admins table
+        admin = db.execute(
+            "SELECT * FROM admins WHERE username = ?",
+            (username,),
+        ).fetchone()
+
+        is_db_admin = admin and check_password_hash(admin["password"], password)
+
+        # Fallback check against environment variable if configured
+        is_env_admin = (
             ADMIN_PASSWORD
             and secrets.compare_digest(username, ADMIN_USERNAME)
             and secrets.compare_digest(password, ADMIN_PASSWORD)
-        ):
+        )
+
+        if is_db_admin or is_env_admin:
             session.clear()
             session["is_admin"] = True
             session["_csrf_token"] = secrets.token_urlsafe(32)

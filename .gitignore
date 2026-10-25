@@ -5,3 +5,4 @@ __pycache__/
 venv/
 banking.db
 .pytest_cache/
+passwords

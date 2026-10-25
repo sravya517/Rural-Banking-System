@@ -568,3 +568,69 @@ def test_transfer_invalid_csrf_rejected(client):
     assert response.status_code == 200
     assert b"Invalid form submission." in response.data
     assert get_user_by_account(sender["account_number"])["balance"] == 10000.00
+
+
+# ---------------- ADMIN AUTHENTICATION TESTS ----------------
+
+def test_admin_login_with_db_credentials_success(client):
+    """Verifies admin login succeeds with database credentials (admin / admin@123)."""
+    response = client.get("/login")
+    assert response.status_code == 200
+
+    with client.session_transaction() as sess:
+        csrf = sess["_csrf_token"]
+
+    response = client.post(
+        "/admin/login",
+        data={
+            "csrf_token": csrf,
+            "username": "admin",
+            "password": "admin@123",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Admin Dashboard" in response.data
+    assert b"Admin login successful." in response.data
+
+
+def test_admin_login_invalid_password(client):
+    """Verifies admin login fails when an incorrect password is supplied."""
+    response = client.get("/login")
+    with client.session_transaction() as sess:
+        csrf = sess["_csrf_token"]
+
+    response = client.post(
+        "/admin/login",
+        data={
+            "csrf_token": csrf,
+            "username": "admin",
+            "password": "wrongpassword456",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Invalid administrator credentials." in response.data
+
+
+def test_admin_login_via_user_form(client):
+    """Verifies entering admin credentials in the user login form logs in as admin."""
+    response = client.get("/login")
+    with client.session_transaction() as sess:
+        csrf = sess["_csrf_token"]
+
+    response = client.post(
+        "/login",
+        data={
+            "csrf_token": csrf,
+            "username": "admin",
+            "password": "admin@123",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Admin Dashboard" in response.data
+
