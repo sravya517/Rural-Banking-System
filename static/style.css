@@ -1418,3 +1418,46 @@ font-size: 14px;
 
 
 }
+
+/* ADMIN USER MANAGEMENT ACTIONS */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-details {
+    color: var(--blue);
+    background: #eef5ff;
+    border-color: #d6e5fb;
+}
+
+.btn-details:hover {
+    color: var(--white);
+    background: var(--blue);
+    border-color: var(--blue);
+    transform: translateY(-1px);
+}
+
+.btn-delete {
+    color: #ffffff;
+    background: var(--danger);
+    border-color: #c93b28;
+}
+
+.btn-delete:hover {
+    color: #ffffff;
+    background: #b53221;
+    border-color: #a82d1d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(217, 75, 56, 0.25);
+}

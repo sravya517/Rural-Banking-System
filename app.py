@@ -395,6 +395,30 @@ def admin_dashboard():
         "SELECT COALESCE(SUM(amount), 0) FROM transactions"
     ).fetchone()[0]
 
+    users = db.execute(
+        """
+        SELECT
+            u.*,
+            (
+                SELECT COUNT(*)
+                FROM transactions
+                WHERE sender_id = u.id OR receiver_id = u.id
+            ) AS transaction_count,
+            (
+                SELECT COALESCE(SUM(amount), 0)
+                FROM transactions
+                WHERE sender_id = u.id
+            ) AS total_sent,
+            (
+                SELECT COALESCE(SUM(amount), 0)
+                FROM transactions
+                WHERE receiver_id = u.id
+            ) AS total_received
+        FROM users u
+        ORDER BY u.id DESC
+        """
+    ).fetchall()
+
     recent_transactions = db.execute(
         """
         SELECT
@@ -415,7 +439,104 @@ def admin_dashboard():
         total_transactions=total_transactions,
         total_transferred=total_transferred,
         recent_transactions=recent_transactions,
+        users=users,
     )
+
+
+# ---------------- ADMIN USER DETAILS ----------------
+
+@app.route("/admin/user/<int:user_id>")
+@admin_required
+def admin_user_details(user_id):
+    db = get_db()
+
+    user = db.execute(
+        "SELECT * FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
+
+    if user is None:
+        flash("User account not found.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    transactions = db.execute(
+        """
+        SELECT
+            t.*,
+            s.name AS sender_name,
+            s.account_number AS sender_account,
+            r.name AS receiver_name,
+            r.account_number AS receiver_account
+        FROM transactions t
+        JOIN users s ON t.sender_id = s.id
+        JOIN users r ON t.receiver_id = r.id
+        WHERE t.sender_id = ? OR t.receiver_id = ?
+        ORDER BY t.id DESC
+        """,
+        (user_id, user_id),
+    ).fetchall()
+
+    total_sent = db.execute(
+        "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE sender_id = ?",
+        (user_id,),
+    ).fetchone()[0]
+
+    total_received = db.execute(
+        "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE receiver_id = ?",
+        (user_id,),
+    ).fetchone()[0]
+
+    return render_template(
+        "admin_user_details.html",
+        user=user,
+        transactions=transactions,
+        total_sent=total_sent,
+        total_received=total_received,
+    )
+
+
+# ---------------- ADMIN DELETE USER ACCOUNT ----------------
+
+@app.route("/admin/user/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def admin_delete_user(user_id):
+    db = get_db()
+
+    user = db.execute(
+        "SELECT * FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
+
+    if user is None:
+        flash("User account not found.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    try:
+        db.execute("BEGIN IMMEDIATE")
+
+        # Delete related transactions first to maintain referential integrity
+        db.execute(
+            "DELETE FROM transactions WHERE sender_id = ? OR receiver_id = ?",
+            (user_id, user_id),
+        )
+
+        db.execute(
+            "DELETE FROM users WHERE id = ?",
+            (user_id,),
+        )
+
+        db.commit()
+        flash(
+            f"User account '{user['name']}' ({user['account_number']}) was successfully deleted.",
+            "success",
+        )
+
+    except sqlite3.Error:
+        db.rollback()
+        app.logger.exception("Error deleting user account %s", user_id)
+        flash("Could not delete user account. Please try again.", "error")
+
+    return redirect(url_for("admin_dashboard"))
 
 
 # ---------------- USER DASHBOARD ----------------

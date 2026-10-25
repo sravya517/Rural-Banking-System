@@ -634,3 +634,149 @@ def test_admin_login_via_user_form(client):
     assert response.status_code == 200
     assert b"Admin Dashboard" in response.data
 
+
+# ---------------- ADMIN USER MANAGEMENT TESTS ----------------
+
+def login_as_admin(client):
+    """Helper to authenticate as admin on the test client."""
+    client.get("/login")
+    with client.session_transaction() as sess:
+        token = sess["_csrf_token"]
+
+    client.post(
+        "/admin/login",
+        data={
+            "csrf_token": token,
+            "username": "admin",
+            "password": "admin@123",
+        },
+        follow_redirects=True,
+    )
+    with client.session_transaction() as sess:
+        active_csrf = sess["_csrf_token"]
+    return active_csrf
+
+
+def test_admin_dashboard_shows_user_accounts(client):
+    """Verifies that admin dashboard lists customer accounts with details and action links."""
+    create_recipient_user("john", "John Doe", "RB-3001", 12500.00)
+    create_recipient_user("sarah", "Sarah Connor", "RB-3002", 8700.00)
+
+    login_as_admin(client)
+    response = client.get("/admin")
+    assert response.status_code == 200
+    assert b"User Accounts" in response.data
+    assert b"John Doe" in response.data
+    assert b"Sarah Connor" in response.data
+    assert b"RB-3001" in response.data
+    assert b"RB-3002" in response.data
+    assert b"/admin/user/" in response.data
+
+
+def test_admin_user_details_view(client):
+    """Verifies admin user details page displays account info, balances, and transaction history."""
+    sender = create_recipient_user("clara", "Clara Oswald", "RB-3003", 9000.00)
+    receiver = create_recipient_user("amy", "Amy Pond", "RB-3004", 6000.00)
+
+    # Insert a transaction
+    db = banking_app.get_db()
+    db.execute(
+        """
+        INSERT INTO transactions (sender_id, receiver_id, amount, description)
+        VALUES (?, ?, ?, ?)
+        """,
+        (sender["id"], receiver["id"], 750.00, "TARDIS repairs"),
+    )
+    db.commit()
+
+    login_as_admin(client)
+    response = client.get(f"/admin/user/{sender['id']}")
+    assert response.status_code == 200
+    assert b"Clara Oswald" in response.data
+    assert b"RB-3003" in response.data
+    assert b"TARDIS repairs" in response.data
+    assert b"750.00" in response.data
+    assert b"Account Transaction History" in response.data
+
+
+def test_admin_user_details_not_found(client):
+    """Verifies accessing non-existent user details redirects with error."""
+    login_as_admin(client)
+    response = client.get("/admin/user/99999", follow_redirects=True)
+    assert response.status_code == 200
+    assert b"User account not found." in response.data
+
+
+def test_admin_delete_user_account_success(client):
+    """Verifies admin can delete a user account and associated transactions."""
+    target_user = create_recipient_user("doomed", "Doomed User", "RB-3005", 5000.00)
+    counterparty = create_recipient_user("partner", "Partner User", "RB-3006", 5000.00)
+
+    # Create associated transaction
+    db = banking_app.get_db()
+    db.execute(
+        """
+        INSERT INTO transactions (sender_id, receiver_id, amount, description)
+        VALUES (?, ?, ?, ?)
+        """,
+        (target_user["id"], counterparty["id"], 200.00, "Old settlement"),
+    )
+    db.commit()
+
+    csrf = login_as_admin(client)
+    response = client.post(
+        f"/admin/user/{target_user['id']}/delete",
+        data={"csrf_token": csrf},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"successfully deleted" in response.data
+
+    # Verify user is gone from DB
+    deleted_row = get_user_by_account(target_user["account_number"])
+    assert deleted_row is None
+
+    # Verify transactions are also cleanly removed
+    db_after = banking_app.get_db()
+    txn = db_after.execute(
+        "SELECT * FROM transactions WHERE sender_id = ? OR receiver_id = ?",
+        (target_user["id"], target_user["id"]),
+    ).fetchone()
+    assert txn is None
+
+
+def test_admin_delete_user_account_not_found(client):
+    """Verifies attempting to delete non-existent user returns error."""
+    csrf = login_as_admin(client)
+    response = client.post(
+        "/admin/user/99999/delete",
+        data={"csrf_token": csrf},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"User account not found." in response.data
+
+
+def test_admin_user_management_unauthorized_for_regular_users(client):
+    """Verifies non-admin regular users cannot view admin details or delete accounts."""
+    regular_user, csrf = create_and_login_user(client, "regular_joe", "Regular Joe")
+    target = create_recipient_user("victim", "Victim User", "RB-3007", 1000.00)
+
+    # Attempt details
+    res_details = client.get(f"/admin/user/{target['id']}")
+    assert res_details.status_code == 302
+    assert "/login" in res_details.headers["Location"]
+
+    # Attempt delete
+    res_delete = client.post(
+        f"/admin/user/{target['id']}/delete",
+        data={"csrf_token": csrf},
+    )
+    assert res_delete.status_code == 302
+    assert "/login" in res_delete.headers["Location"]
+
+    # Target must still exist
+    assert get_user_by_account(target["account_number"]) is not None
+
+

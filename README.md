@@ -18,7 +18,7 @@ A secure, lightweight Flask web application for rural banking services, supporti
 ## ✨ Features
 - **Account Management**: User registration with auto-generated account numbers (`RB-XXXX`) and initial demo balance.
 - **Transactions**: Funds transfer between users, direct deposits, withdrawals, and full transaction history.
-- **Admin Dashboard**: Administrator login to view total users, transaction volumes, and system activity.
+- **Admin Dashboard**: Comprehensive administration panel to view system statistics, browse all registered customer accounts, inspect in-depth customer profiles and transaction histories, and safely delete user accounts.
 - **Security**: Password hashing via `werkzeug.security`, CSRF token protection on all forms, HTTP-only secure session cookies, and SQLite foreign key constraints.
 
 ---

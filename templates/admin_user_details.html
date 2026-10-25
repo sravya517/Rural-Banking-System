@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Account Details: {{ user.name }} | RuralBank Admin{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom: 20px;">
+    <a href="{{ url_for('admin_dashboard') }}" class="back-link" style="margin-top: 0;">
+        ← Back to Admin Dashboard
+    </a>
+</div>
+
+<div class="section-heading">
+    <p class="eyebrow">CUSTOMER ACCOUNT DETAILS</p>
+    <h1>{{ user.name }}</h1>
+    <p class="muted">
+        Account Number: <strong>{{ user.account_number }}</strong> &nbsp;|&nbsp;
+        Username: <code>{{ user.username }}</code> &nbsp;|&nbsp;
+        User ID: <strong>#{{ user.id }}</strong>
+    </p>
+</div>
+
+<!-- ACCOUNT STATS SUMMARY -->
+<div class="stats-grid">
+    <div class="panel">
+        <p class="muted">Current Balance</p>
+        <h2 style="color: #17814b;">₹{{ "%.2f"|format(user.balance) }}</h2>
+    </div>
+
+    <div class="panel">
+        <p class="muted">Total Money Sent</p>
+        <h2 style="color: #d94b38;">₹{{ "%.2f"|format(total_sent) }}</h2>
+    </div>
+
+    <div class="panel">
+        <p class="muted">Total Money Received</p>
+        <h2 style="color: #1769e0;">₹{{ "%.2f"|format(total_received) }}</h2>
+    </div>
+</div>
+
+<!-- ACCOUNT INFORMATION & MANAGEMENT PANEL -->
+<div class="panel" style="margin-top: 25px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;">
+        <div>
+            <h2 style="margin: 0;">Account Profile</h2>
+            <p class="muted" style="margin: 4px 0 0;">Customer profile metadata and administration controls.</p>
+        </div>
+
+        <form
+            action="{{ url_for('admin_delete_user', user_id=user.id) }}"
+            method="POST"
+            class="inline-form"
+            onsubmit="return confirm('Are you sure you want to permanently delete customer {{ user.name }} ({{ user.account_number }})? This action cannot be reversed and will erase all associated transaction records.');"
+        >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="action-btn btn-delete" style="padding: 10px 18px; font-size: 14px;">
+                🗑️ Delete Account
+            </button>
+        </form>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
+        <div style="background: #f8fbff; padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+            <span class="muted" style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Customer Name</span>
+            <p style="margin: 6px 0 0; font-size: 16px; font-weight: 700; color: var(--navy);">{{ user.name }}</p>
+        </div>
+
+        <div style="background: #f8fbff; padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+            <span class="muted" style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Username</span>
+            <p style="margin: 6px 0 0; font-size: 16px; font-weight: 700; color: var(--navy);"><code>{{ user.username }}</code></p>
+        </div>
+
+        <div style="background: #f8fbff; padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+            <span class="muted" style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Account Number</span>
+            <p style="margin: 6px 0 0; font-size: 16px; font-weight: 700; color: #1769e0; font-family: monospace;">{{ user.account_number }}</p>
+        </div>
+
+        <div style="background: #f8fbff; padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+            <span class="muted" style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Available Funds</span>
+            <p style="margin: 6px 0 0; font-size: 16px; font-weight: 700; color: #17814b;">₹{{ "%.2f"|format(user.balance) }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- TRANSACTION HISTORY FOR THIS USER -->
+<div class="panel history-panel" style="margin-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h2 style="margin: 0;">Account Transaction History</h2>
+            <p class="muted" style="margin: 4px 0 0;">All recorded transfers sent or received by this account.</p>
+        </div>
+        <span class="badge" style="background: #eef4fc; color: #0b1730; padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 13px;">
+            {{ transactions|length }} Records
+        </span>
+    </div>
+
+    {% if transactions %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Type</th>
+                    <th>Counterparty</th>
+                    <th>Account No.</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                {% set is_sender = (t.sender_id == user.id) %}
+                <tr>
+                    <td>
+                        {% if is_sender %}
+                        <span class="badge" style="background: #fff0ed; color: #d94b38; padding: 4px 9px; border-radius: 6px; font-weight: 800; font-size: 11px;">
+                            SENT
+                        </span>
+                        {% else %}
+                        <span class="badge" style="background: #e8f7ef; color: #17814b; padding: 4px 9px; border-radius: 6px; font-weight: 800; font-size: 11px;">
+                            RECEIVED
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if is_sender %}
+                        <strong>To:</strong> {{ t.receiver_name }}
+                        {% else %}
+                        <strong>From:</strong> {{ t.sender_name }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-family: monospace; font-size: 13px; color: #556677;">
+                            {% if is_sender %}
+                            {{ t.receiver_account }}
+                            {% else %}
+                            {{ t.sender_account }}
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td style="font-weight: 700; {% if is_sender %}color: #d94b38;{% else %}color: #17814b;{% endif %}">
+                        {% if is_sender %}-{% else %}+{% endif %}₹{{ "%.2f"|format(t.amount) }}
+                    </td>
+                    <td>{{ t.description }}</td>
+                    <td class="muted">{{ t.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p class="empty">No transactions recorded for this account yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
