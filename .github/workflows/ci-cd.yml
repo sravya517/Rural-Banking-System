@@ -109,6 +109,7 @@ jobs:
   # container health, and prunes unused images.
   # ----------------------------------------------------------------------
   deploy:
+    if: ${{ secrets.SSH_HOST != '' }}
     name: Automated Deploy via SSH
     needs: build-and-push
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
@@ -119,7 +120,23 @@ jobs:
         run: |
           echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> $GITHUB_ENV
 
+      # Pre-flight check: Verifies if SSH secrets have been configured in GitHub repo
+      - name: Check SSH Deployment Secrets
+        id: check-secrets
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SSH_HOST" ] || [ -z "$SSH_USER" ] || [ -z "$SSH_KEY" ]; then
+            echo "::warning title=SSH Deployment Skipped::Missing required secrets (SSH_HOST, SSH_USER, or SSH_PRIVATE_KEY). Add them in GitHub Settings -> Secrets and variables -> Actions to enable automated server deployment."
+            echo "configured=false" >> $GITHUB_OUTPUT
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Execute Deployment via SSH
+        if: steps.check-secrets.outputs.configured == 'true'
         uses: appleboy/ssh-action@v1.2.0
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}

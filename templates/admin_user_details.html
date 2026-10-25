@@ -24,17 +24,17 @@
 <div class="stats-grid">
     <div class="panel">
         <p class="muted">Current Balance</p>
-        <h2 style="color: #17814b;">₹{{ "%.2f"|format(user.balance) }}</h2>
+        <h2 style="color: #17814b;">₹{{ "%.2f"|format(user.balance|float) }}</h2>
     </div>
 
     <div class="panel">
         <p class="muted">Total Money Sent</p>
-        <h2 style="color: #d94b38;">₹{{ "%.2f"|format(total_sent) }}</h2>
+        <h2 style="color: #d94b38;">₹{{ "%.2f"|format(total_sent|float) }}</h2>
     </div>
 
     <div class="panel">
         <p class="muted">Total Money Received</p>
-        <h2 style="color: #1769e0;">₹{{ "%.2f"|format(total_received) }}</h2>
+        <h2 style="color: #1769e0;">₹{{ "%.2f"|format(total_received|float) }}</h2>
     </div>
 </div>
 
@@ -50,7 +50,7 @@
             action="{{ url_for('admin_delete_user', user_id=user.id) }}"
             method="POST"
             class="inline-form"
-            onsubmit="return confirm('Are you sure you want to permanently delete customer {{ user.name }} ({{ user.account_number }})? This action cannot be reversed and will erase all associated transaction records.');"
+            onsubmit="return confirm('Are you sure you want to permanently delete this customer account? This action cannot be reversed and will erase all associated transaction records.');"
         >
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="action-btn btn-delete" style="padding: 10px 18px; font-size: 14px;">
@@ -77,7 +77,7 @@
 
         <div style="background: #f8fbff; padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
             <span class="muted" style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Available Funds</span>
-            <p style="margin: 6px 0 0; font-size: 16px; font-weight: 700; color: #17814b;">₹{{ "%.2f"|format(user.balance) }}</p>
+            <p style="margin: 6px 0 0; font-size: 16px; font-weight: 700; color: #17814b;">₹{{ "%.2f"|format(user.balance|float) }}</p>
         </div>
     </div>
 </div>
@@ -113,33 +113,25 @@
                 <tr>
                     <td>
                         {% if is_sender %}
-                        <span class="badge" style="background: #fff0ed; color: #d94b38; padding: 4px 9px; border-radius: 6px; font-weight: 800; font-size: 11px;">
-                            SENT
-                        </span>
+                        <span class="badge-sent">SENT</span>
                         {% else %}
-                        <span class="badge" style="background: #e8f7ef; color: #17814b; padding: 4px 9px; border-radius: 6px; font-weight: 800; font-size: 11px;">
-                            RECEIVED
-                        </span>
+                        <span class="badge-received">RECEIVED</span>
                         {% endif %}
                     </td>
                     <td>
                         {% if is_sender %}
-                        <strong>To:</strong> {{ t.receiver_name }}
+                        <strong>To:</strong> {{ t.receiver_name or 'Deleted User' }}
                         {% else %}
-                        <strong>From:</strong> {{ t.sender_name }}
+                        <strong>From:</strong> {{ t.sender_name or 'Deleted User' }}
                         {% endif %}
                     </td>
                     <td>
-                        <span style="font-family: monospace; font-size: 13px; color: #556677;">
-                            {% if is_sender %}
-                            {{ t.receiver_account }}
-                            {% else %}
-                            {{ t.sender_account }}
-                            {% endif %}
+                        <span class="badge-account-no">
+                            {{ (t.receiver_account if is_sender else t.sender_account) or 'N/A' }}
                         </span>
                     </td>
-                    <td style="font-weight: 700; {% if is_sender %}color: #d94b38;{% else %}color: #17814b;{% endif %}">
-                        {% if is_sender %}-{% else %}+{% endif %}₹{{ "%.2f"|format(t.amount) }}
+                    <td style="font-weight: 700; color: {{ '#d94b38' if is_sender else '#17814b' }};">
+                        {{ '-' if is_sender else '+' }}₹{{ "%.2f"|format(t.amount|float) }}
                     </td>
                     <td>{{ t.description }}</td>
                     <td class="muted">{{ t.created_at }}</td>

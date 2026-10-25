@@ -463,13 +463,13 @@ def admin_user_details(user_id):
         """
         SELECT
             t.*,
-            s.name AS sender_name,
-            s.account_number AS sender_account,
-            r.name AS receiver_name,
-            r.account_number AS receiver_account
+            COALESCE(s.name, 'Deleted User') AS sender_name,
+            COALESCE(s.account_number, 'N/A') AS sender_account,
+            COALESCE(r.name, 'Deleted User') AS receiver_name,
+            COALESCE(r.account_number, 'N/A') AS receiver_account
         FROM transactions t
-        JOIN users s ON t.sender_id = s.id
-        JOIN users r ON t.receiver_id = r.id
+        LEFT JOIN users s ON t.sender_id = s.id
+        LEFT JOIN users r ON t.receiver_id = r.id
         WHERE t.sender_id = ? OR t.receiver_id = ?
         ORDER BY t.id DESC
         """,

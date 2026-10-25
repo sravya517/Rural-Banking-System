@@ -1461,3 +1461,36 @@ font-size: 14px;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(217, 75, 56, 0.25);
 }
+
+.badge-sent {
+    display: inline-block;
+    background: #fff0ed;
+    color: #d94b38;
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.badge-received {
+    display: inline-block;
+    background: #e8f7ef;
+    color: #17814b;
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.badge-account-no {
+    display: inline-block;
+    padding: 3px 8px;
+    background: #eef4fc;
+    color: #0b1730;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 700;
+}
